@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravitique Demo - Experience the Future</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .demo-main {
+            display: grid;
+            grid-template-columns: 1fr 250px;
+            gap: 2rem;
+            align-items: start;
+        }
+        
+        .demo-control-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            padding: 1.5rem;
+            position: sticky;
+            top: 120px;
+        }
+        
+        .control-group {
+            margin-bottom: 1rem;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+        
+        .slider-container {
+            position: relative;
+            margin: 0.5rem 0;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--background-light);
+            outline: none;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(212, 165, 116, 0.5);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(212, 165, 116, 0.5);
+        }
+        
+        .demo-viewport {
+            background: radial-gradient(circle at center, #0a0f0a 0%, #000000 100%);
+            border-radius: var(--border-radius-large);
+            padding: 3rem;
+            position: relative;
+            min-height: 500px;
+            overflow: hidden;
+            border: 2px solid rgba(212, 165, 116, 0.3);
+            box-shadow: 
+                inset 0 0 100px rgba(44, 95, 45, 0.1),
+                0 0 50px rgba(0, 0, 0, 0.8);
+        }
+        
+        .demo-scene {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+        
+        .gravity-core {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: coreRotate 20s linear infinite;
+        }
+        
+        .core-sphere {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.9) 0%,
+                var(--accent-color) 20%,
+                var(--primary-color) 60%,
+                #0a2f0b 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 0 60px rgba(212, 165, 116, 0.8),
+                inset 0 0 30px rgba(255, 255, 255, 0.1),
+                0 0 120px rgba(44, 95, 45, 0.4);
+        }
+        
+        @keyframes coreRotate {
+            0% { transform: rotateY(0deg) rotateX(0deg); }
+            100% { transform: rotateY(360deg) rotateX(360deg); }
+        }
+        
+        .gravity-field {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border: 2px solid rgba(212, 165, 116, 0.4);
+            border-radius: 50%;
+            opacity: 0.6;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+        
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(212, 165, 116, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-main {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .demo-control-panel {
+                padding: 1rem;
+                position: static;
+                order: -1;
+            }
+            
+            .demo-viewport {
+                padding: 1rem;
+                min-height: 300px;
+            }
+            
+            .demo-scene {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cursor -->
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursor-follower"></div>
+
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1 class="logo"><a href="index.html" style="text-decoration: none; color: inherit;">Gravitique</a></h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#technology">Technology</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="demo.html" class="active">Demo</a></li>
+                <li><a href="index.html#contact" class="nav-cta">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" style="min-height: 45vh; padding-top: 6rem; padding-bottom: 2rem;" data-scroll-section>
+            <div class="hero-bg-particles"></div>
+            <div class="hero-content" style="text-align: center; max-width: 800px; margin: 0 auto;">
+                <h2 class="hero-title">Experience Gravitique<br>Interactive Demo</h2>
+                <p class="hero-subtitle">Manipulate gravitational fields in real-time and witness the power of our revolutionary technology.</p>
+            </div>
+        </section>
+
+        <!-- Demo Section -->
+        <section class="features" style="padding-top: 2rem;" data-scroll-section>
+            <div class="demo-container">
+                <div class="demo-main">
+                    <div class="demo-viewport">
+                        <div class="demo-scene" id="demoScene">
+                            <div class="gravity-core" id="gravityCore">
+                                <div class="core-sphere"></div>
+                            </div>
+                            <div class="gravity-field" id="gravityField"></div>
+                        </div>
+                    </div>
+
+                    <div class="demo-control-panel">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">Controls</h3>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Intensity</label>
+                            <div class="slider-container">
+                                <input type="range" min="0" max="100" value="50" class="slider" id="intensitySlider">
+                            </div>
+                            <span id="intensityValue" style="color: var(--accent-color); font-weight: 600; font-size: 0.9rem;">50%</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Radius</label>
+                            <div class="slider-container">
+                                <input type="range" min="30" max="200" value="100" class="slider" id="radiusSlider">
+                            </div>
+                            <span id="radiusValue" style="color: var(--accent-color); font-weight: 600; font-size: 0.9rem;">100px</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Particles</label>
+                            <div class="slider-container">
+                                <input type="range" min="3" max="12" value="6" class="slider" id="particleSlider">
+                            </div>
+                            <span id="particleValue" style="color: var(--accent-color); font-weight: 600; font-size: 0.9rem;">6 objects</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta" data-scroll-section>
+            <div class="container">
+                <h3 class="cta-title">Ready for the Real Experience?</h3>
+                <p class="cta-subtitle">Schedule a private demonstration at our Geneva facility.</p>
+                <a href="index.html#contact" class="btn btn-primary btn-large">Request Private Demo</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h4>Gravitique</h4>
+                    <p>Redefining the impossible.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="index.html">Home</a>
+                    <a href="about.html">About</a>
+                    <a href="demo.html">Demo</a>
+                    <a href="#privacy">Privacy</a>
+                    <a href="#terms">Terms</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Gravitique. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('cursor')
+        const follower = document.getElementById('cursor-follower')
+        
+        if (cursor && follower) {
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px'
+                cursor.style.top = e.clientY + 'px'
+                
+                setTimeout(() => {
+                    follower.style.left = e.clientX + 'px'
+                    follower.style.top = e.clientY + 'px'
+                }, 100)
+            })
+        }
+
+        // Demo functionality
+        const intensitySlider = document.getElementById('intensitySlider')
+        const radiusSlider = document.getElementById('radiusSlider')
+        const particleSlider = document.getElementById('particleSlider')
+        const demoScene = document.getElementById('demoScene')
+        const gravityField = document.getElementById('gravityField')
+
+        let particles = []
+
+        // Create particles
+        function createParticles(count) {
+            console.log('Creating', count, 'particles')
+            
+            // Remove existing particles
+            particles.forEach(p => p.element && p.element.remove())
+            particles = []
+
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div')
+                element.style.position = 'absolute'
+                element.style.width = '8px'
+                element.style.height = '8px'
+                element.style.backgroundColor = '#D4A574'
+                element.style.borderRadius = '50%'
+                element.style.boxShadow = '0 0 10px rgba(212, 165, 116, 0.8)'
+                element.style.zIndex = '10'
+                
+                // Create particles in a tighter circle around the center
+                const angle = (i / count) * Math.PI * 2
+                const distance = 60 + (i % 2) * 20  // Much smaller distances
+                
+                const particle = {
+                    element: element,
+                    baseX: Math.cos(angle) * distance,
+                    baseY: Math.sin(angle) * distance,
+                    angle: angle,
+                    rotation: 0
+                }
+                
+                // Position relative to scene center
+                element.style.left = `${200 + particle.baseX}px`  // Scene center + offset
+                element.style.top = `${200 + particle.baseY}px`   // Scene center + offset
+                
+                console.log(`Particle ${i}: position ${particle.baseX}, ${particle.baseY}`)
+                
+                demoScene.appendChild(element)
+                particles.push(particle)
+            }
+            
+            console.log('Total particles created:', particles.length)
+        }
+
+        // Animation loop
+        function animate() {
+            const intensity = parseInt(intensitySlider.value)
+            const radius = parseInt(radiusSlider.value)
+            const time = Date.now() * 0.001
+
+            particles.forEach((particle, index) => {
+                if (!particle.element) return
+                
+                // Calculate current distance from center (0,0)
+                const currentDistance = Math.sqrt(particle.baseX ** 2 + particle.baseY ** 2)
+                
+                let finalX = particle.baseX
+                let finalY = particle.baseY
+                
+                // Add gentle floating motion when no gravity
+                const floatX = Math.sin(time * 0.5 + particle.angle) * 3
+                const floatY = Math.cos(time * 0.3 + particle.angle) * 3
+                
+                if (intensity > 0 && currentDistance < radius) {
+                    // STRONG gravity effect - pull particles toward center
+                    const influence = (intensity / 100) * (1 - currentDistance / radius)
+                    const pullPower = influence * 0.7  // How much to pull toward center
+                    
+                    // Pull toward center (0,0)
+                    finalX = particle.baseX * (1 - pullPower)
+                    finalY = particle.baseY * (1 - pullPower)
+                    
+                    // Add violent quivering when under gravity influence
+                    const quiverIntensity = influence * 3
+                    finalX += Math.sin(time * 25 + index) * quiverIntensity
+                    finalY += Math.cos(time * 30 + index) * quiverIntensity
+                    
+                    // Visual feedback - bright glow and scaling
+                    const glow = 15 + influence * 25
+                    particle.element.style.boxShadow = `0 0 ${glow}px rgba(212, 165, 116, ${0.9 + influence * 0.1})`
+                    particle.element.style.transform = `scale(${1 + influence * 0.8})`
+                    particle.element.style.backgroundColor = `rgba(212, 165, 116, ${0.8 + influence * 0.2})`
+                } else {
+                    // No gravity - gentle floating
+                    finalX += floatX
+                    finalY += floatY
+                    
+                    // Normal appearance
+                    particle.element.style.boxShadow = '0 0 10px rgba(212, 165, 116, 0.6)'
+                    particle.element.style.transform = 'scale(1)'
+                    particle.element.style.backgroundColor = '#D4A574'
+                }
+                
+                // Convert to screen coordinates (scene center is 200,200)
+                const screenX = 200 + finalX
+                const screenY = 200 + finalY
+                
+                // Update position
+                particle.element.style.left = `${screenX}px`
+                particle.element.style.top = `${screenY}px`
+            })
+            
+            requestAnimationFrame(animate)
+        }
+
+        // Update controls
+        function updateControls() {
+            const intensity = intensitySlider.value
+            const radius = radiusSlider.value
+            const particleCount = particleSlider.value
+
+            // Update display values
+            document.getElementById('intensityValue').textContent = intensity + '%'
+            document.getElementById('radiusValue').textContent = radius + 'px'
+            document.getElementById('particleValue').textContent = particleCount + ' objects'
+
+            // Update particle count
+            if (particles.length !== parseInt(particleCount)) {
+                createParticles(parseInt(particleCount))
+            }
+
+            // Update gravity field
+            gravityField.style.width = radius * 2 + 'px'
+            gravityField.style.height = radius * 2 + 'px'
+            gravityField.style.opacity = Math.max(0.3, intensity / 100 * 0.8)
+        }
+
+        // Event listeners
+        intensitySlider.addEventListener('input', updateControls)
+        radiusSlider.addEventListener('input', updateControls)
+        particleSlider.addEventListener('input', updateControls)
+
+        // Initialize
+        createParticles(6)
+        updateControls()
+        animate()
+
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in')
+                }
+            })
+        }, { threshold: 0.1 })
+
+        document.querySelectorAll('[data-scroll-section]').forEach(section => {
+            observer.observe(section)
+        })
+
+        // Create particles for hero background
+        function createHeroParticles() {
+            const heroParticles = document.querySelector('.hero-bg-particles')
+            if (heroParticles) {
+                for (let i = 0; i < 30; i++) {
+                    const particle = document.createElement('div')
+                    particle.className = 'particle'
+                    particle.style.left = Math.random() * 100 + '%'
+                    particle.style.top = Math.random() * 100 + '%'
+                    particle.style.animationDelay = Math.random() * 10 + 's'
+                    particle.style.animationDuration = (Math.random() * 20 + 10) + 's'
+                    heroParticles.appendChild(particle)
+                }
+            }
+        }
+
+        createHeroParticles()
+
+        // Active nav styling
+        const style = document.createElement('style')
+        style.textContent = `
+            .nav-menu a.active {
+                color: var(--primary-color);
+                font-weight: 600;
+            }
+        `
+        document.head.appendChild(style)
+    </script>
+</body>
+</html>
